@@ -38,7 +38,8 @@ def write_answers(filename, model_id, questions, answers):
                 "model_id": model_id,
                 "choices": {
                     "index": 0,
-                    "turns": [answers[i][0], answers[i][1]],
+                    # "turns": [answers[i][0], answers[i][1]],
+                    "turns": [answers[i][0]], # REVERT
                 },
                 "tstamp": time.time(),
             }
@@ -52,8 +53,8 @@ def answer_mt_bench(s, question_1, question_2):
     )
     s += sgl.user(question_1)
     s += sgl.assistant(sgl.gen("answer_1"))
-    s += sgl.user(question_2)
-    s += sgl.assistant(sgl.gen("answer_2"))
+    # s += sgl.user(question_2) # REVERT
+    # s += sgl.assistant(sgl.gen("answer_2")) # REVERT
 
 
 def main(args):
@@ -72,16 +73,18 @@ def main(args):
     rets = answer_mt_bench.run_batch(
         arguments,
         temperature=0,
-        max_new_tokens=2048,
+        # max_new_tokens=2048,
+        max_new_tokens=256, # REVERT: reduced to match vllm
         num_threads=args.parallel,
         progress_bar=True,
     )
-    answers = [[s["answer_1"], s["answer_2"]] for s in rets]
+    # answers = [[s["answer_1"], s["answer_2"]] for s in rets]
+    answers = [[s["answer_1"]] for s in rets] # REVERT
 
     latency = time.time() - tic
     num_output_tokens = sum(
         s.get_meta_info("answer_1")["completion_tokens"]
-        + s.get_meta_info("answer_2")["completion_tokens"]
+        # + s.get_meta_info("answer_2")["completion_tokens"] # REVERT
         for s in rets
     )
 
@@ -94,7 +97,7 @@ def main(args):
     if has_verify:
         num_verify_tokens = sum(
             s.get_meta_info("answer_1")["spec_verify_ct"]
-            + s.get_meta_info("answer_2")["spec_verify_ct"]
+            # + s.get_meta_info("answer_2")["spec_verify_ct"] # REVERT
             for s in rets
         )
 
